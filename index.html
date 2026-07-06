@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Octopus Energy - Comparateur Solar Boost vs Intelligent Octopus</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Header bar -->
+    <header class="app-header">
+        <div class="brand">
+            <svg class="octopus-logo" viewBox="0 0 100 100" width="36" height="36">
+                <circle cx="50" cy="50" r="45" fill="#F050F8"/>
+                <circle cx="35" cy="40" r="6" fill="#fff"/>
+                <circle cx="65" cy="40" r="6" fill="#fff"/>
+                <path d="M 30 65 Q 50 80 70 65" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+            </svg>
+            <span class="brand-text">Octopus <span class="accent-text">Energy</span></span>
+        </div>
+        <div class="header-title">
+            <h1>Comparateur d'Offres Flexibilité</h1>
+            <p class="subtitle">Solar Boost vs Intelligent Octopus</p>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="app-container">
+        <!-- Input section -->
+        <aside class="inputs-sidebar">
+            <h2>🔌 Paramètres du foyer</h2>
+            
+            <form id="calc-form" onsubmit="return false;">
+                
+                <!-- Section 1: Profil electrique -->
+                <fieldset class="form-section">
+                    <legend>Profil & Compteur</legend>
+                    
+                    <div class="form-group">
+                        <label for="compteur-pwr">Puissance souscrite compteur (Linky)</label>
+                        <select id="compteur-pwr" class="select-input">
+                            <option value="3">3 kVA</option>
+                            <option value="6" selected>6 kVA</option>
+                            <option value="9">9 kVA</option>
+                            <option value="12">12 kVA</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="option-tarifaire">Option Tarifaire</label>
+                        <select id="option-tarifaire" class="select-input">
+                            <option value="base" selected>Option Base (Tarif unique)</option>
+                            <option value="hphc">Option Heures Pleines / Heures Creuses (HP/HC)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="house-cons">Consommation Maison (hors VE)</label>
+                        <div class="input-with-unit">
+                            <input type="number" id="house-cons" value="4500" min="0" step="100" class="num-input">
+                            <span class="unit">kWh/an</span>
+                        </div>
+                        <span class="input-helper">Consommation d'électricité annuelle classique du foyer.</span>
+                    </div>
+                </fieldset>
+
+                <!-- Section 2: Installation Solaire -->
+                <fieldset class="form-section">
+                    <legend>Solaire & Batterie</legend>
+                    
+                    <div class="form-group">
+                        <div class="slider-header">
+                            <label for="solar-pwr">Puissance photovoltaïque</label>
+                            <div class="slider-value-input-wrapper">
+                                <input type="number" id="solar-pwr-input" value="6.0" min="3" max="12" step="0.1" class="slider-num-input secondary-color-border">
+                                <span class="unit-label">kWc</span>
+                            </div>
+                        </div>
+                        <input type="range" id="solar-pwr" min="3" max="12" step="0.5" value="6" class="range-slider secondary-accent">
+                        <div class="slider-labels">
+                            <span>3 kWc</span>
+                            <span>12 kWc</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="slider-header">
+                            <label for="comp-battery-size">Capacité Batterie (Solar Boost)</label>
+                            <div class="slider-value-input-wrapper">
+                                <input type="number" id="comp-battery-input" value="10" min="2" max="15" step="1" class="slider-num-input primary-color-border">
+                                <span class="unit-label">kWh</span>
+                            </div>
+                        </div>
+                        <input type="range" id="comp-battery-size" min="2" max="15" step="1" value="10" class="range-slider primary-accent">
+                        <div class="slider-labels">
+                            <span>2 kWh</span>
+                            <span>15 kWh</span>
+                        </div>
+                        <span class="input-helper">Solar Boost exige une batterie &ge; 80% de la puissance kWc.</span>
+                    </div>
+                </fieldset>
+
+                <!-- Section 3: Mobilite Electrique -->
+                <fieldset class="form-section">
+                    <legend>Véhicule Électrique (VE)</legend>
+                    
+                    <div class="form-group">
+                        <label for="ve-mileage">Kilométrage annuel</label>
+                        <div class="input-with-unit">
+                            <input type="number" id="ve-mileage" value="15000" min="0" step="1000" class="num-input">
+                            <span class="unit">km/an</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ve-efficiency">Consommation moyenne du VE</label>
+                        <div class="input-with-unit">
+                            <input type="number" id="ve-efficiency" value="15.0" min="5" max="35" step="0.5" class="num-input">
+                            <span class="unit">kWh/100 km</span>
+                        </div>
+                        <span class="input-helper">Généralement comprise entre 14 et 20 kWh/100 km.</span>
+                    </div>
+
+                    <div class="form-group checkbox-group day-charging">
+                        <input type="checkbox" id="ve-sun-hours" class="checkbox-input">
+                        <label for="ve-sun-hours" class="checkbox-label">
+                            <span class="icon">☀️</span>
+                            <strong>VE branché le jour</strong> (heures solaires)
+                        </label>
+                    </div>
+                </fieldset>
+
+                <!-- Section 4: Options et tarifs -->
+                <fieldset class="form-section">
+                    <legend>Options & Tarifs</legend>
+                    
+                    <div class="form-group checkbox-group welcome-gift">
+                        <input type="checkbox" id="solar-welcome-bonus" checked class="checkbox-input">
+                        <label for="solar-welcome-bonus" class="checkbox-label">
+                            <span class="icon">🎁</span>
+                            <strong>Pose avec OESF</strong> (1ère année d'élec. offerte)
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="io-grid-version">Grille Tarifaire Intelligent Octopus (IO)</label>
+                        <select id="io-grid-version" class="select-input">
+                            <option value="new" selected>Nouvelle grille (Depuis Février 2026)</option>
+                            <option value="old">Ancienne grille (Avant Février 2026)</option>
+                        </select>
+                        <span class="input-helper">Certains clients existants conservent leur ancienne grille tarifaire.</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="standard-buyback-rate">Tarif rachat standard (EDF OA / Hors Solar Boost)</label>
+                        <select id="standard-buyback-rate" class="select-input">
+                            <option value="0.011" selected>Nouveau tarif (depuis juin 2026) : 1,1 c€/kWh HT</option>
+                            <option value="0.04">Ancien tarif standard : 4,0 c€/kWh</option>
+                            <option value="0.13">Ancien tarif Solar Plus : 13,0 c€/kWh</option>
+                        </select>
+                        <span class="input-helper">Appliqué pour le surplus solaire dans l'offre Intelligent Octopus.</span>
+                    </div>
+                </fieldset>
+            </form>
+        </aside>
+
+        <!-- Results dashboard -->
+        <section class="results-dashboard">
+            
+            <div class="cards-container">
+                <!-- Solar Boost Result Card -->
+                <div class="card card-sb">
+                    <div class="card-glow sb-glow"></div>
+                    <div class="card-header">
+                        <span class="offer-badge badge-sb">🟢 Offre Solar Boost</span>
+                        <h3>Solaire + Batterie Pilotée</h3>
+                    </div>
+                    
+                    <div class="card-body">
+                        <div class="net-cost-wrapper">
+                            <span class="cost-label">Coût Net Moyen (3 ans)</span>
+                            <div id="sb-net-annual" class="cost-value">1 250 €</div>
+                            <div id="sb-net-monthly" class="cost-monthly">soit 104,17 € / mois</div>
+                        </div>
+
+                        <ul class="cost-breakdown">
+                            <li>
+                                <span class="breakdown-label">Abonnement compteur</span>
+                                <span id="sb-bill-sub" class="breakdown-value">234,72 €/an</span>
+                            </li>
+                            <li>
+                                <span class="breakdown-label" id="sb-label-house">Maison (30% réseau)</span>
+                                <span id="sb-bill-house" class="breakdown-value">255,83 €/an</span>
+                            </li>
+                            <li>
+                                <span class="breakdown-label" id="sb-label-ve">Recharge VE</span>
+                                <span id="sb-bill-ve" class="breakdown-value">127,91 €/an</span>
+                            </li>
+                            <li class="gain-item">
+                                <span class="breakdown-label">Bonus pilotage batterie</span>
+                                <span id="sb-gain-pilot" class="breakdown-value">-365,00 €/an</span>
+                            </li>
+                            <li class="gain-item">
+                                <span class="breakdown-label">Rachat surplus (4 cts/kWh)</span>
+                                <span id="sb-gain-buyback" class="breakdown-value">-72,00 €/an</span>
+                            </li>
+                            <li class="gain-item welcome-gift-item" id="sb-welcome-li">
+                                <span class="breakdown-label">Cadeau 1ère année (étalé)</span>
+                                <span id="sb-welcome-display" class="breakdown-value">-116,67 €/an</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Intelligent Octopus Result Card -->
+                <div class="card card-io">
+                    <div class="card-glow io-glow"></div>
+                    <div class="card-header">
+                        <span class="offer-badge badge-io">⚡ Intelligent Octopus</span>
+                        <h3>Recharge VE Pilotée</h3>
+                    </div>
+                    
+                    <div class="card-body">
+                        <div class="net-cost-wrapper">
+                            <span class="cost-label">Coût Net Moyen (3 ans)</span>
+                            <div id="io-net-annual" class="cost-value">1 420 €</div>
+                            <div id="io-net-monthly" class="cost-monthly">soit 118,33 € / mois</div>
+                        </div>
+
+                        <ul class="cost-breakdown">
+                            <li>
+                                <span class="breakdown-label">Abonnement compteur</span>
+                                <span id="io-bill-sub" class="breakdown-value">234,72 €/an</span>
+                            </li>
+                            <li>
+                                <span class="breakdown-label" id="io-label-house">Maison (réseau)</span>
+                                <span id="io-bill-house" class="breakdown-value">554,29 €/an</span>
+                            </li>
+                            <li>
+                                <span class="breakdown-label" id="io-label-ve">Recharge VE (pilotée à 8 cts)</span>
+                                <span id="io-bill-ve" class="breakdown-value">180,00 €/an</span>
+                            </li>
+                            <li>
+                                <span class="breakdown-label">Bonus pilotage batterie</span>
+                                <span class="breakdown-value gray-text">Aucun (0 €)</span>
+                            </li>
+                            <li class="gain-item">
+                                <span id="io-buyback-title" class="breakdown-label">Rachat surplus (EDF OA)</span>
+                                <span id="io-gain-buyback" class="breakdown-value">-19,80 €/an</span>
+                            </li>
+                            <li>
+                                <span class="breakdown-label">Cadeau 1ère année</span>
+                                <span class="breakdown-value gray-text">Aucun (0 €)</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conclusion Block -->
+            <div id="comparison-conclusion" class="conclusion-box">
+                <div class="conclusion-icon" id="conclusion-emoji">⚖️</div>
+                <div class="conclusion-content">
+                    <h4 id="conclusion-title">Analyse en cours...</h4>
+                    <p id="conclusion-desc">Veuillez ajuster les paramètres pour lancer la simulation.</p>
+                </div>
+            </div>
+
+            <!-- 3-Year Projection Table -->
+            <section class="projection-table-section">
+                <h2>📊 Projection comparative sur 3 ans</h2>
+                <div class="table-container">
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th>Offres / Périodes</th>
+                                <th>Année 1</th>
+                                <th>Année 2</th>
+                                <th>Année 3</th>
+                                <th class="highlight-col">Total 3 ans</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="offer-name-col sb-color">🟢 Solar Boost</td>
+                                <td id="sb-table-y1">800 €</td>
+                                <td id="sb-table-y2">1150 €</td>
+                                <td id="sb-table-y3">1150 €</td>
+                                <td id="sb-table-total" class="total-cell sb-color">3 100 €</td>
+                            </tr>
+                            <tr>
+                                <td class="offer-name-col io-color">⚡ Intelligent Octopus</td>
+                                <td id="io-table-y1">1420 €</td>
+                                <td id="io-table-y2">1420 €</td>
+                                <td id="io-table-y3">1420 €</td>
+                                <td id="io-table-total" class="total-cell io-color">4 260 €</td>
+                            </tr>
+                            <tr class="diff-row">
+                                <td class="offer-name-col diff-color">💸 Écart (Économie)</td>
+                                <td id="diff-table-y1" class="diff-val">+620 €</td>
+                                <td id="diff-table-y2" class="diff-val">+270 €</td>
+                                <td id="diff-table-y3" class="diff-val">+270 €</td>
+                                <td id="diff-table-total" class="total-diff">+1 160 €</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="table-helper">
+            </section>
+            
+            <!-- Detailed Formulas Section -->
+            <section class="formulas-section" style="background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 16px; padding: 2rem; backdrop-filter: blur(16px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); margin-top: 2rem;">
+                <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 800; margin-bottom: 1.5rem; color: #fff; display: flex; align-items: center; gap: 0.5rem;">🧮 Méthodologie et Formules de Calcul</h2>
+                
+                <div style="display: flex; flex-direction: column; gap: 1.5rem; font-size: 0.95rem; color: var(--text-muted);">
+                    
+                    <!-- Communes -->
+                    <div style="background: rgba(0,0,0,0.2); padding: 1.2rem; border-radius: 8px; border-left: 3px solid var(--secondary);">
+                        <h4 style="margin: 0 0 0.5rem 0; color: #fff; font-size: 1.05rem;">1. Valeurs Communes & Hypothèses</h4>
+                        <ul style="padding-left: 1.2rem; margin: 0; display: flex; flex-direction: column; gap: 0.4rem; list-style-type: disc;">
+                            <li><strong>Production Solaire Annuelle :</strong> Puissance installée (kWc) &times; 1 000 kWh/an.</li>
+                            <li><strong>Consommation Annuelle du VE :</strong> (Kilométrage annuel (km) &times; Consommation moyenne (kWh/100km)) / 100.</li>
+                            <li><strong>Option Tarifaire & Grilles de Prix :</strong> 
+                                <br>&bull; <strong>Solar Boost (Grille Mars 2026) :</strong> Option Base = <strong>0,1925 €/kWh</strong> pour les puissances au-dessus de 6 kVA (ou <strong>0,1940 €/kWh</strong> pour les puissances inférieures ou égales à 6 kVA) | HP = <strong>0,2074 €/kWh</strong> | HC = <strong>0,1588 €/kWh</strong>.
+                                <br>&bull; <strong>Intelligent Octopus (Grille Février 2026 - Nouvelle) :</strong> Option Base = <strong>0,1895 €/kWh</strong> pour les puissances au-dessus de 6 kVA (ou <strong>0,1909 €/kWh</strong> pour les puissances inférieures ou égales à 6 kVA) | HP = <strong>0,2031 €/kWh</strong> | HC = <strong>0,1555 €/kWh</strong>.
+                                <br>&bull; <strong>Intelligent Octopus (Grille Janvier 2026 - Ancienne) :</strong> Option Base = <strong>0,1954 €/kWh</strong> (toutes puissances) | HP = <strong>0,2080 €/kWh</strong> | HC = <strong>0,1645 €/kWh</strong>.
+                                <br>&bull; En HP/HC, la consommation de la maison est répartie par défaut à 60% en Heures Pleines (HP) et 40% en Heures Creuses (HC).
+                            </li>
+                            <li><strong>Coût de l'Abonnement Annuel :</strong> Ajusté selon la puissance compteur (6, 9 ou 12 kVA) et l'option tarifaire choisie.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Solar Boost -->
+                    <div style="background: rgba(0,0,0,0.2); padding: 1.2rem; border-radius: 8px; border-left: 3px solid var(--primary);">
+                        <h4 style="margin: 0 0 0.5rem 0; color: #fff; font-size: 1.05rem;">2. Moteur Solar Boost (Solaire + Batterie)</h4>
+                        <p style="margin: 0 0 0.8rem 0; line-height: 1.5;">Cette offre combine l'autoconsommation maximisée par la batterie et des bonus spécifiques :</p>
+                        <ul style="padding-left: 1.2rem; margin: 0; display: flex; flex-direction: column; gap: 0.4rem; list-style-type: disc;">
+                            <li><strong>Maison (Import réseau) :</strong> Le taux d'autoconsommation est fixé à <strong>70%</strong>. Le foyer n'achète donc que 30% de sa consommation à Octopus, valorisé au tarif Base ou selon le split 60% HP / 40% HC.</li>
+                            <li><strong>Recharge VE (Import réseau) :</strong> 
+                                <br>&bull; <em>Si branché le jour :</em> Le VE se recharge en priorité sur le solaire direct. L'import réseau est réduit à 30% (facturé en Base, ou 100% HP en option HP/HC).
+                                <br>&bull; <em>Si branché la nuit :</em> Recharge 100% sur le réseau (facturé en Base, ou bénéficiant à 100% du tarif HC en option HP/HC).
+                            </li>
+                            <li><strong>Rachat du surplus :</strong> Le surplus injecté sur le réseau est estimé à 30% de la production. Il est racheté au tarif Solar Boost de <strong>4 cts €/kWh</strong> (0,04 €) : <code style="background: rgba(255,255,255,0.05); padding: 0.15rem 0.3rem; border-radius: 4px; color: var(--primary);">Production &times; 30% &times; 0,04 €</code>.</li>
+                            <li><strong>Bonus de Pilotage Batterie :</strong> Rémunération de 0,10 €/jour par kWh de capacité : <code style="background: rgba(255,255,255,0.05); padding: 0.15rem 0.3rem; border-radius: 4px; color: var(--primary);">Batterie (kWh) &times; 0,10 € &times; 365 jours</code> (soit 365 €/an pour 10 kWh).</li>
+                            <li><strong>Cadeau 1ère année (OESF) :</strong> Un bonus forfaitaire déduit en année 1 si l'installation est posée par Octopus Services (5 kWh = 200 € ; 7 kWh = 250 € ; &ge;10 kWh = 350 €).</li>
+                        </ul>
+                    </div>
+
+                    <!-- Intelligent Octopus -->
+                    <div style="background: rgba(0,0,0,0.2); padding: 1.2rem; border-radius: 8px; border-left: 3px solid var(--secondary);">
+                        <h4 style="margin: 0 0 0.5rem 0; color: #fff; font-size: 1.05rem;">3. Moteur Intelligent Octopus (Pilotage VE)</h4>
+                        <p style="margin: 0 0 0.8rem 0; line-height: 1.5;">Cette offre cible l'optimisation financière de la recharge du véhicule électrique à l'aide d'algorithmes réseau :</p>
+                        <ul style="padding-left: 1.2rem; margin: 0; display: flex; flex-direction: column; gap: 0.4rem; list-style-type: disc;">
+                            <li><strong>Maison (Import réseau) :</strong> Le taux d'autoconsommation de la maison est fixé à <strong>70%</strong> grâce à la présence de la batterie physique. L'import réseau de 30% est valorisé au tarif Base ou HP/HC d'Intelligent Octopus.</li>
+                            <li><strong>Recharge VE (Import réseau) :</strong> Grâce au remboursement du pilotage intelligent, le coût net de la charge est garanti à <strong>0,08 €/kWh</strong>, peu importe l'option (le bonus mensuel s'adapte automatiquement selon les créneaux réels de charge).</li>
+                            <li><strong>Rachat du surplus :</strong> Le surplus injecté sur le réseau (30% de la production) est racheté au tarif réglementé EDF OA choisi (1,1 c€/kWh HT, ou anciens tarifs) : <code style="background: rgba(255,255,255,0.05); padding: 0.15rem 0.3rem; border-radius: 4px; color: var(--secondary);">Production &times; 30% &times; Tarif Rachat</code>.</li>
+                            <li><strong>Bonus pilotage batterie / 1ère année :</strong> Non applicables sur cette offre (0 €).</li>
+                        </ul>
+                    </div>
+
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <footer class="app-footer">
+        <p>Copyright &copy; 2026 Octopus Energy France, LLC. Tous droits réservés. Outil interne d'aide à la vente Ops B2C.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
