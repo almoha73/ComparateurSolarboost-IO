@@ -43,8 +43,8 @@
                         <label for="compteur-pwr">Puissance souscrite compteur (Linky)</label>
                         <select id="compteur-pwr" class="select-input">
                             <option value="3">3 kVA</option>
-                            <option value="6" selected>6 kVA</option>
-                            <option value="9">9 kVA</option>
+                            <option value="6">6 kVA</option>
+                            <option value="9" selected>9 kVA</option>
                             <option value="12">12 kVA</option>
                         </select>
                     </div>
@@ -101,6 +101,23 @@
                         </div>
                         <span class="input-helper">Solar Boost exige une batterie &ge; 80% de la puissance kWc.</span>
                     </div>
+
+                    <div class="form-group">
+                        <div class="slider-header">
+                            <label for="autocons-rate">Taux d'autoconsommation global</label>
+                            <div class="slider-value-input-wrapper">
+                                <input type="number" id="autocons-rate-input" value="60" min="20" max="95" step="5" class="slider-num-input primary-color-border">
+                                <span class="unit-label">%</span>
+                            </div>
+                        </div>
+                        <input type="range" id="autocons-rate" min="20" max="95" step="5" value="60" class="range-slider primary-accent">
+                        <div class="slider-labels">
+                            <span>20%</span>
+                            <span>60% (défaut)</span>
+                            <span>95%</span>
+                        </div>
+                        <span class="input-helper">Part de la production PV consommée localement (Maison + VE). Le solde (40%) est vendu en surplus.</span>
+                    </div>
                 </fieldset>
 
                 <!-- Section 3: Mobilite Electrique -->
@@ -118,18 +135,20 @@
                     <div class="form-group">
                         <label for="ve-efficiency">Consommation moyenne du VE</label>
                         <div class="input-with-unit">
-                            <input type="number" id="ve-efficiency" value="15.0" min="5" max="35" step="0.5" class="num-input">
+                            <input type="number" id="ve-efficiency" value="17.5" min="5" max="35" step="0.5" class="num-input">
                             <span class="unit">kWh/100 km</span>
                         </div>
                         <span class="input-helper">Généralement comprise entre 14 et 20 kWh/100 km.</span>
                     </div>
 
-                    <div class="form-group checkbox-group day-charging">
-                        <input type="checkbox" id="ve-sun-hours" class="checkbox-input">
-                        <label for="ve-sun-hours" class="checkbox-label">
-                            <span class="icon">☀️</span>
-                            <strong>VE branché le jour</strong> (heures solaires)
-                        </label>
+                    <div class="form-group">
+                        <label for="ve-profile">Profil de recharge du VE</label>
+                        <select id="ve-profile" class="select-input">
+                            <option value="0.20">🚗 Pendulaire classique (20% solaire / 80% réseau)</option>
+                            <option value="0.40" selected>💻 Mix télétravail/domicile (40% solaire / 60% réseau)</option>
+                            <option value="0.60">🏡 Full à domicile (60% solaire / 40% réseau)</option>
+                        </select>
+                        <span class="input-helper">Part de la recharge du véhicule couverte par la production solaire en journée.</span>
                     </div>
                 </fieldset>
 
@@ -146,9 +165,19 @@
                     </div>
 
                     <div class="form-group">
+                        <label for="sb-grid-version">Grille Tarifaire SolarBoost</label>
+                        <select id="sb-grid-version" class="select-input">
+                            <option value="new" selected>Nouvelle grille (Août / Septembre 2026)</option>
+                            <option value="old">Ancienne grille (Mars 2026)</option>
+                        </select>
+                        <span class="input-helper">Grille officielle d'électricité de l'offre SolarBoost.</span>
+                    </div>
+
+                    <div class="form-group">
                         <label for="io-grid-version">Grille Tarifaire Intelligent Octopus (IO)</label>
                         <select id="io-grid-version" class="select-input">
-                            <option value="new" selected>Nouvelle grille (Depuis Février 2026)</option>
+                            <option value="aout26" selected>Nouvelle grille (Août / Septembre 2026)</option>
+                            <option value="fev26">Grille Février 2026</option>
                             <option value="old">Ancienne grille (Avant Février 2026)</option>
                         </select>
                         <span class="input-helper">Certains clients existants conservent leur ancienne grille tarifaire.</span>
@@ -157,9 +186,9 @@
                     <div class="form-group">
                         <label for="standard-buyback-rate">Tarif rachat standard (EDF OA / Hors Solar Boost)</label>
                         <select id="standard-buyback-rate" class="select-input">
-                            <option value="0.011" selected>Nouveau tarif (depuis juin 2026) : 1,1 c€/kWh HT</option>
-                            <option value="0.04">Ancien tarif standard : 4,0 c€/kWh</option>
-                            <option value="0.13">Ancien tarif Solar Plus : 13,0 c€/kWh</option>
+                            <option value="0.011" selected>Tarif EDF OA actuel (depuis juin 2026) : 1,1 c€/kWh HT</option>
+                            <option value="0.04">Tarif EDF OA 2025 : 4,0 c€/kWh</option>
+                            <option value="0.13">Ancien tarif EDF OA (avant Février 2025) : 13,0 c€/kWh</option>
                         </select>
                         <span class="input-helper">Appliqué pour le surplus solaire dans l'offre Intelligent Octopus.</span>
                     </div>
@@ -308,7 +337,8 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="table-helper">
+                </div>
+                <div class="table-helper">Projection financière nette sur 3 ans prenant en compte les abonnements, les consommations nettes, les rachats de surplus et les bonus éventuels.</div>
             </section>
             
             <!-- Detailed Formulas Section -->
@@ -324,39 +354,45 @@
                             <li><strong>Production Solaire Annuelle :</strong> Puissance installée (kWc) &times; 1 000 kWh/an.</li>
                             <li><strong>Consommation Annuelle du VE :</strong> (Kilométrage annuel (km) &times; Consommation moyenne (kWh/100km)) / 100.</li>
                             <li><strong>Option Tarifaire & Grilles de Prix :</strong> 
-                                <br>&bull; <strong>Solar Boost (Grille Mars 2026) :</strong> Option Base = <strong>0,1925 €/kWh</strong> pour les puissances au-dessus de 6 kVA (ou <strong>0,1940 €/kWh</strong> pour les puissances inférieures ou égales à 6 kVA) | HP = <strong>0,2074 €/kWh</strong> | HC = <strong>0,1588 €/kWh</strong>.
-                                <br>&bull; <strong>Intelligent Octopus (Grille Février 2026 - Nouvelle) :</strong> Option Base = <strong>0,1895 €/kWh</strong> pour les puissances au-dessus de 6 kVA (ou <strong>0,1909 €/kWh</strong> pour les puissances inférieures ou égales à 6 kVA) | HP = <strong>0,2031 €/kWh</strong> | HC = <strong>0,1555 €/kWh</strong>.
-                                <br>&bull; <strong>Intelligent Octopus (Grille Janvier 2026 - Ancienne) :</strong> Option Base = <strong>0,1954 €/kWh</strong> (toutes puissances) | HP = <strong>0,2080 €/kWh</strong> | HC = <strong>0,1645 €/kWh</strong>.
-                                <br>&bull; En HP/HC, la consommation de la maison est répartie par défaut à 60% en Heures Pleines (HP) et 40% en Heures Creuses (HC).
+                                <br>&bull; <strong>Solar Boost (Grille Août / Septembre 2026 - Nouvelle) :</strong> Option Base = <strong>0,1985 €/kWh</strong> (> 6 kVA) ou <strong>0,2001 €/kWh</strong> (&le; 6 kVA) | HP = <strong>0,2142 €/kWh</strong> | HC = <strong>0,1589 €/kWh</strong>. Abonnement mensuel : 9 kVA = 19,88 € TTC, 6 kVA = 15,86 € TTC.
+                                <br>&bull; <strong>Solar Boost (Grille Mars 2026 - Ancienne) :</strong> Option Base = <strong>0,1925 €/kWh</strong> (> 6 kVA) ou <strong>0,1940 €/kWh</strong> (&le; 6 kVA) | HP = <strong>0,2074 €/kWh</strong> | HC = <strong>0,1588 €/kWh</strong>.
+                                <br>&bull; <strong>Intelligent Octopus (Grille Août / Septembre 2026 - Nouvelle) :</strong> Option Base = <strong>0,1953 €/kWh</strong> (> 6 kVA) ou <strong>0,1968 €/kWh</strong> (&le; 6 kVA) | HP = <strong>0,2106 €/kWh</strong> | HC = <strong>0,1565 €/kWh</strong>. Abonnement mensuel : 9 kVA = 19,88 € TTC, 6 kVA = 15,86 € TTC.
+                                <br>&bull; <strong>Intelligent Octopus (Grille Février 2026) :</strong> Option Base = <strong>0,1895 €/kWh</strong> (> 6 kVA) ou <strong>0,1909 €/kWh</strong> (&le; 6 kVA) | HP = <strong>0,2031 €/kWh</strong> | HC = <strong>0,1555 €/kWh</strong>.
+                                <br>&bull; <strong>Intelligent Octopus (Grille Janvier 2026 - Ancienne) :</strong> Option Base = <strong>0,1954 €/kWh</strong> | HP = <strong>0,2080 €/kWh</strong> | HC = <strong>0,1645 €/kWh</strong>.
+                                <br>&bull; En option HP/HC, la consommation réseau de la maison est répartie par défaut à 60% en Heures Pleines (HP) et 40% en Heures Creuses (HC).
                             </li>
-                            <li><strong>Coût de l'Abonnement Annuel :</strong> Ajusté selon la puissance compteur (6, 9 ou 12 kVA) et l'option tarifaire choisie.</li>
+                            <li><strong>Tarifs Rachat Surplus Standard (EDF OA) :</strong> Nouveau tarif 2026 (1,1 c€/kWh HT), Tarif EDF OA 2025 (4,0 c€/kWh) ou Ancien tarif EDF OA avant fév. 2025 (13,0 c€/kWh).</li>
                         </ul>
                     </div>
 
                     <!-- Solar Boost -->
                     <div style="background: rgba(0,0,0,0.2); padding: 1.2rem; border-radius: 8px; border-left: 3px solid var(--primary);">
-                        <h4 style="margin: 0 0 0.5rem 0; color: #fff; font-size: 1.05rem;">2. Moteur Solar Boost (Solaire + Batterie)</h4>
-                        <p style="margin: 0 0 0.8rem 0; line-height: 1.5;">Cette offre combine l'autoconsommation maximisée par la batterie et des bonus spécifiques :</p>
+                        <h4 style="margin: 0 0 0.5rem 0; color: #fff; font-size: 1.05rem;">2. Moteur Solar Boost (Solaire + Batterie Pilotée)</h4>
+                        <p style="margin: 0 0 0.8rem 0; line-height: 1.5;">Cette offre maximise l'utilisation de l'énergie solaire sur site grâce à la batterie et rémunère la flexibilité :</p>
                         <ul style="padding-left: 1.2rem; margin: 0; display: flex; flex-direction: column; gap: 0.4rem; list-style-type: disc;">
-                            <li><strong>Maison (Import réseau) :</strong> Le taux d'autoconsommation est fixé à <strong>70%</strong>. Le foyer n'achète donc que 30% de sa consommation à Octopus, valorisé au tarif Base ou selon le split 60% HP / 40% HC.</li>
-                            <li><strong>Recharge VE (Import réseau) :</strong> 
-                                <br>&bull; <em>Si branché le jour :</em> Le VE se recharge en priorité sur le solaire direct. L'import réseau est réduit à 30% (facturé en Base, ou 100% HP en option HP/HC).
-                                <br>&bull; <em>Si branché la nuit :</em> Recharge 100% sur le réseau (facturé en Base, ou bénéficiant à 100% du tarif HC en option HP/HC).
+                            <li><strong>Principe physique de déduction :</strong> 
+                                <br>&bull; <code style="background: rgba(255,255,255,0.05); padding: 0.15rem 0.3rem; border-radius: 4px; color: var(--primary);">Production PV &times; Taux d'autoconsommation (60%) = Énergie PV consommée</code>
+                                <br>&bull; <code style="background: rgba(255,255,255,0.05); padding: 0.15rem 0.3rem; border-radius: 4px; color: var(--primary);">(Consommation Maison + VE) – Énergie PV consommée = Import Réseau total</code>
                             </li>
-                            <li><strong>Rachat du surplus :</strong> Le surplus injecté sur le réseau est estimé à 30% de la production. Il est racheté au tarif Solar Boost de <strong>4 cts €/kWh</strong> (0,04 €) : <code style="background: rgba(255,255,255,0.05); padding: 0.15rem 0.3rem; border-radius: 4px; color: var(--primary);">Production &times; 30% &times; 0,04 €</code>.</li>
-                            <li><strong>Bonus de Pilotage Batterie :</strong> Rémunération de 0,10 €/jour par kWh de capacité : <code style="background: rgba(255,255,255,0.05); padding: 0.15rem 0.3rem; border-radius: 4px; color: var(--primary);">Batterie (kWh) &times; 0,10 € &times; 365 jours</code> (soit 365 €/an pour 10 kWh).</li>
-                            <li><strong>Cadeau 1ère année (OESF) :</strong> Un bonus forfaitaire déduit en année 1 si l'installation est posée par Octopus Services (5 kWh = 200 € ; 7 kWh = 250 € ; &ge;10 kWh = 350 €).</li>
+                            <li><strong>Répartition de la recharge VE selon profil :</strong>
+                                <br>&bull; 🚗 <em>Pendulaire classique :</em> 20% solaire direct, 80% import réseau (la nuit en HC en option HP/HC).
+                                <br>&bull; 💻 <em>Mix télétravail/domicile :</em> 40% solaire direct, 60% import réseau.
+                                <br>&bull; 🏡 <em>Full à domicile :</em> 60% solaire direct, 40% import réseau.
+                            </li>
+                            <li><strong>Rachat du surplus :</strong> Le surplus injecté sur le réseau représente 40% de la production (100% - 60%). Il est racheté au tarif Solar Boost garanti de <strong>4 cts €/kWh</strong> (0,04 €) : <code style="background: rgba(255,255,255,0.05); padding: 0.15rem 0.3rem; border-radius: 4px; color: var(--primary);">Production &times; 40% &times; 0,04 €</code>.</li>
+                            <li><strong>Bonus de Pilotage Batterie :</strong> Rémunération quotidienne de 0,10 €/jour par kWh de capacité batterie installée : <code style="background: rgba(255,255,255,0.05); padding: 0.15rem 0.3rem; border-radius: 4px; color: var(--primary);">Batterie (kWh) &times; 0,10 € &times; 365 jours</code> (soit 365 €/an pour 10 kWh).</li>
+                            <li><strong>Cadeau 1ère année (OESF) :</strong> Forfait déduit en année 1 si l'installation est réalisée par Octopus Energy Services France (&lt;6 kWh = 200 € ; 6-8.9 kWh = 250 € ; &ge;10 kWh = 350 €).</li>
                         </ul>
                     </div>
 
                     <!-- Intelligent Octopus -->
                     <div style="background: rgba(0,0,0,0.2); padding: 1.2rem; border-radius: 8px; border-left: 3px solid var(--secondary);">
-                        <h4 style="margin: 0 0 0.5rem 0; color: #fff; font-size: 1.05rem;">3. Moteur Intelligent Octopus (Pilotage VE)</h4>
-                        <p style="margin: 0 0 0.8rem 0; line-height: 1.5;">Cette offre cible l'optimisation financière de la recharge du véhicule électrique à l'aide d'algorithmes réseau :</p>
+                        <h4 style="margin: 0 0 0.5rem 0; color: #fff; font-size: 1.05rem;">3. Moteur Intelligent Octopus (Recharge VE Pilotée)</h4>
+                        <p style="margin: 0 0 0.8rem 0; line-height: 1.5;">Cette offre cible l'optimisation financière de la recharge du véhicule électrique à l'aide d'algorithmes de charge intelligente :</p>
                         <ul style="padding-left: 1.2rem; margin: 0; display: flex; flex-direction: column; gap: 0.4rem; list-style-type: disc;">
-                            <li><strong>Maison (Import réseau) :</strong> Le taux d'autoconsommation de la maison est fixé à <strong>70%</strong> grâce à la présence de la batterie physique. L'import réseau de 30% est valorisé au tarif Base ou HP/HC d'Intelligent Octopus.</li>
-                            <li><strong>Recharge VE (Import réseau) :</strong> Grâce au remboursement du pilotage intelligent, le coût net de la charge est garanti à <strong>0,08 €/kWh</strong>, peu importe l'option (le bonus mensuel s'adapte automatiquement selon les créneaux réels de charge).</li>
-                            <li><strong>Rachat du surplus :</strong> Le surplus injecté sur le réseau (30% de la production) est racheté au tarif réglementé EDF OA choisi (1,1 c€/kWh HT, ou anciens tarifs) : <code style="background: rgba(255,255,255,0.05); padding: 0.15rem 0.3rem; border-radius: 4px; color: var(--secondary);">Production &times; 30% &times; Tarif Rachat</code>.</li>
+                            <li><strong>Recharge VE (Import réseau) :</strong> Le véhicule profite de la part solaire selon son profil (20%, 40% ou 60%). Tout le solde importé sur le réseau est garanti au tarif ultra-avantageux de <strong>0,08 €/kWh</strong> net grâce au bonus de pilotage intelligent.</li>
+                            <li><strong>Maison (Import réseau) :</strong> Bénéficie du solde d'énergie PV autoconsommée. Le reste de consommation est valorisé au tarif Base ou HP/HC de la grille Intelligent Octopus choisie.</li>
+                            <li><strong>Rachat du surplus :</strong> Le surplus injecté sur le réseau est valorisé au tarif contractuel EDF OA choisi (1,1 c€ actuel, 4,0 c€ 2025, ou 13,0 c€ ancien) : <code style="background: rgba(255,255,255,0.05); padding: 0.15rem 0.3rem; border-radius: 4px; color: var(--secondary);">Surplus PV &times; Tarif EDF OA</code>.</li>
                             <li><strong>Bonus pilotage batterie / 1ère année :</strong> Non applicables sur cette offre (0 €).</li>
                         </ul>
                     </div>

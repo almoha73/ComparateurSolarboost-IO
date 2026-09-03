@@ -2,19 +2,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- ELEMENTS DU DOM ---
     // Inputs elements
     const compPwr = document.getElementById('compteur-pwr');
+    const compOptionTarifaire = document.getElementById('option-tarifaire');
     const compHouseCons = document.getElementById('house-cons');
     const compSolarPwr = document.getElementById('solar-pwr');
     const compSolarPwrInput = document.getElementById('solar-pwr-input');
     const compBatterySize = document.getElementById('comp-battery-size');
     const compBatteryInput = document.getElementById('comp-battery-input');
+    const compAutoconsRate = document.getElementById('autocons-rate');
+    const compAutoconsRateInput = document.getElementById('autocons-rate-input');
     const compVeMileage = document.getElementById('ve-mileage');
     const compVeEfficiency = document.getElementById('ve-efficiency');
-    const compVeSunHours = document.getElementById('ve-sun-hours');
+    const compVeProfile = document.getElementById('ve-profile');
     const compSolarWelcome = document.getElementById('solar-welcome-bonus');
-    const compStandardBuyback = document.getElementById('standard-buyback-rate');
-    const compOptionTarifaire = document.getElementById('option-tarifaire');
+    const compSbGridVersion = document.getElementById('sb-grid-version');
     const compIoGridVersion = document.getElementById('io-grid-version');
-
+    const compStandardBuyback = document.getElementById('standard-buyback-rate');
 
     // Outputs Solar Boost
     const sbNetAnnual = document.getElementById('sb-net-annual');
@@ -68,170 +70,215 @@ document.addEventListener('DOMContentLoaded', () => {
         // Récupération des valeurs d'entrée
         const pwrKVA = parseInt(compPwr.value);
         const optionTarifaireVal = compOptionTarifaire.value;
+        const sbGridVersionVal = compSbGridVersion ? compSbGridVersion.value : 'new';
         const ioGridVersionVal = compIoGridVersion.value;
         const houseConsVal = parseFloat(compHouseCons.value) || 0;
         const solarkWcVal = parseFloat(compSolarPwr.value);
         const batterykWhVal = parseFloat(compBatterySize.value);
+        const autoconsRateVal = compAutoconsRate ? (parseFloat(compAutoconsRate.value) || 60) : 60;
         const veMileageVal = parseFloat(compVeMileage.value) || 0;
         const veEfficiencyVal = parseFloat(compVeEfficiency.value) || 0;
-        const veSunHoursVal = compVeSunHours.checked;
+        const veProfileVal = compVeProfile ? parseFloat(compVeProfile.value) : 0.40;
         const welcomeBonusChecked = compSolarWelcome.checked;
         const standardBuybackVal = parseFloat(compStandardBuyback.value);
 
-        // Synchro de la valeur du slider vers le champ de saisie (si ce n'est pas le champ de saisie qui a le focus)
+        // Synchro des sliders vers les inputs numériques (si non focalisés)
         if (document.activeElement !== compSolarPwrInput) {
             compSolarPwrInput.value = solarkWcVal.toFixed(1);
         }
         if (document.activeElement !== compBatteryInput) {
             compBatteryInput.value = batterykWhVal;
         }
-
-        // Constantes tarifaires
-        const tariffIO = 0.08;     
-        const sbBuybackRate = 0.04; 
-
-        // Prix de l'électricité selon l'option tarifaire choisie (Séparé par Offre)
-        const isHPHC = (optionTarifaireVal === 'hphc');
-        
-        // Grille Solar Boost (Applicable au 01/03/2026)
-        // Pour les puissances <= 6 kVA, le tarif de base est de 0.1940 €, sinon 0.1925 €
-        const sbRateBase = (pwrKVA <= 6) ? 0.1940 : 0.1925;
-        const sbRateHP = 0.2074;
-        const sbRateHC = 0.1588;
-
-        // Grille Intelligent Octopus (IO) - Choix dynamique selon la version sélectionnée
-        let ioRateBase = 0.1895;
-        let ioRateHP = 0.2031;
-        let ioRateHC = 0.1555;
-
-        if (ioGridVersionVal === 'old') {
-            // Ancienne Grille IO (Janvier 2026)
-            ioRateBase = 0.1954;
-            ioRateHP = 0.2080;
-            ioRateHC = 0.1645;
-        } else {
-            // Nouvelle Grille IO (Février 2026)
-            // Pour les puissances <= 6 kVA, le tarif de base est de 0.1909 €, sinon 0.1895 €
-            ioRateBase = (pwrKVA <= 6) ? 0.1909 : 0.1895;
-            ioRateHP = 0.2031;
-            ioRateHC = 0.1555;
+        if (compAutoconsRateInput && document.activeElement !== compAutoconsRateInput) {
+            compAutoconsRateInput.value = Math.round(autoconsRateVal);
         }
 
-        // Calcul des abonnements annuels pour Solar Boost (Grille Mars 2026)
-        let sbMonthlySub = 15.65;
-        if (pwrKVA === 3) {
-            sbMonthlySub = isHPHC ? 12.05 : 12.03;
-        } else if (pwrKVA === 9) {
-            sbMonthlySub = isHPHC ? 19.83 : 19.56;
-        } else if (pwrKVA === 12) {
-            sbMonthlySub = isHPHC ? 23.68 : 23.32;
+        // Constantes tarifaires
+        const tariffIO = 0.08;     // Tarif net garanti Intelligent Octopus pour la recharge VE
+        const sbBuybackRate = 0.04; // Tarif rachat surplus SolarBoost (4 cts/kWh)
+        const isHPHC = (optionTarifaireVal === 'hphc');
+
+        // --- GRILLE TARIFAIRE SOLARBOOST ---
+        let sbRateBase = 0.1985;
+        let sbRateHP = 0.2142;
+        let sbRateHC = 0.1589;
+        let sbMonthlySub = 19.88;
+
+        if (sbGridVersionVal === 'new') {
+            // NOUVELLE GRILLE SOLARBOOST (Août / Septembre 2026 - Grille Officielle)
+            sbRateBase = (pwrKVA <= 6) ? 0.2001 : 0.1985;
+            sbRateHP = 0.2142;
+            sbRateHC = 0.1589;
+
+            // Abonnements mensuels TTC identiques en Option Base et Option HP/HC
+            if (pwrKVA === 3) sbMonthlySub = 12.13;
+            else if (pwrKVA === 6) sbMonthlySub = 15.86;
+            else if (pwrKVA === 9) sbMonthlySub = 19.88;
+            else if (pwrKVA === 12) sbMonthlySub = 23.76;
+            else sbMonthlySub = 19.88;
+        } else {
+            // ANCIENNE GRILLE SOLARBOOST (Mars 2026)
+            sbRateBase = (pwrKVA <= 6) ? 0.1940 : 0.1925;
+            sbRateHP = 0.2074;
+            sbRateHC = 0.1588;
+
+            if (pwrKVA === 3) {
+                sbMonthlySub = isHPHC ? 12.05 : 12.03;
+            } else if (pwrKVA === 6) {
+                sbMonthlySub = 15.65;
+            } else if (pwrKVA === 9) {
+                sbMonthlySub = isHPHC ? 19.83 : 19.56;
+            } else if (pwrKVA === 12) {
+                sbMonthlySub = isHPHC ? 23.68 : 23.32;
+            }
         }
         const sbAnnualSub = sbMonthlySub * 12;
 
-        // Calcul des abonnements annuels pour Intelligent Octopus (Choix selon la grille)
-        let ioMonthlySub = 15.65;
+        // --- GRILLE TARIFAIRE INTELLIGENT OCTOPUS (IO) ---
+        let ioRateBase = 0.1953;
+        let ioRateHP = 0.2106;
+        let ioRateHC = 0.1565;
+        let ioMonthlySub = 19.88;
+
         if (ioGridVersionVal === 'old') {
-            // Ancienne Grille Janvier 2026
-            if (pwrKVA === 3) {
-                ioMonthlySub = isHPHC ? 11.36 : 11.25;
-            } else if (pwrKVA === 6) {
-                ioMonthlySub = isHPHC ? 15.05 : 14.78;
-            } else if (pwrKVA === 9) {
-                ioMonthlySub = isHPHC ? 19.19 : 18.49;
-            } else if (pwrKVA === 12) {
-                ioMonthlySub = isHPHC ? 23.01 : 22.21;
-            }
+            // Ancienne Grille IO (Janvier 2026 et avant)
+            ioRateBase = 0.1954;
+            ioRateHP = 0.2080;
+            ioRateHC = 0.1645;
+
+            if (pwrKVA === 3) ioMonthlySub = isHPHC ? 11.36 : 11.25;
+            else if (pwrKVA === 6) ioMonthlySub = isHPHC ? 15.05 : 14.78;
+            else if (pwrKVA === 9) ioMonthlySub = isHPHC ? 19.19 : 18.49;
+            else if (pwrKVA === 12) ioMonthlySub = isHPHC ? 23.01 : 22.21;
+        } else if (ioGridVersionVal === 'fev26') {
+            // Grille IO Février 2026
+            ioRateBase = (pwrKVA <= 6) ? 0.1909 : 0.1895;
+            ioRateHP = 0.2031;
+            ioRateHC = 0.1555;
+
+            if (pwrKVA === 3) ioMonthlySub = isHPHC ? 12.05 : 12.03;
+            else if (pwrKVA === 6) ioMonthlySub = 15.65;
+            else if (pwrKVA === 9) ioMonthlySub = isHPHC ? 19.83 : 19.56;
+            else if (pwrKVA === 12) ioMonthlySub = isHPHC ? 23.68 : 23.32;
         } else {
-            // Nouvelle Grille Février 2026
-            if (pwrKVA === 3) {
-                ioMonthlySub = isHPHC ? 12.05 : 12.03;
-            } else if (pwrKVA === 9) {
-                ioMonthlySub = isHPHC ? 19.83 : 19.56;
-            } else if (pwrKVA === 12) {
-                ioMonthlySub = isHPHC ? 23.68 : 23.32;
-            }
+            // NOUVELLE GRILLE IO (Août / Septembre 2026 - Grille Officielle)
+            ioRateBase = (pwrKVA <= 6) ? 0.1968 : 0.1953;
+            ioRateHP = 0.2106;
+            ioRateHC = 0.1565;
+
+            // Abonnements mensuels TTC identiques en Option Base et Option HP/HC
+            if (pwrKVA === 3) ioMonthlySub = 12.13;
+            else if (pwrKVA === 6) ioMonthlySub = 15.86;
+            else if (pwrKVA === 9) ioMonthlySub = 19.88;
+            else if (pwrKVA === 12) ioMonthlySub = 23.76;
+            else ioMonthlySub = 19.88;
         }
         const ioAnnualSub = ioMonthlySub * 12;
 
-        // Productions solaires (1 kWc = 1000 kWh/an)
+        // --- CALCULS PHYSIQUES SOLAIRE ET CONSOMMATION ---
+        // Production solaire totale (1 kWc = 1 000 kWh/an)
         const annualProduction = solarkWcVal * 1000;
+
+        // Taux d'autoconsommation physique (ex: 60%)
+        const autoConsRatio = autoconsRateVal / 100;
+
+        // Énergie PV autoconsommée déductible de la facture
+        const pvEnergyConsumed = annualProduction * autoConsRatio;
+
+        // Surplus injecté sur le réseau et valorisé
+        const pvSurplus = annualProduction * (1 - autoConsRatio);
 
         // Consommation annuelle du VE (kWh/an)
         const veConsVal = (veMileageVal * veEfficiencyVal) / 100;
 
-        // --- OFFRE SOLAR BOOST (SB) ---
-        // Autoconsommation de 70% pour la maison grâce à la batterie. 30% d'import réseau.
-        const sbHouseImport = houseConsVal * 0.30;
+        // Consommation totale du foyer
+        const totalHouseholdCons = houseConsVal + veConsVal;
+
+        // Import réseau global après déduction de l'énergie PV consommée
+        const totalGridImport = Math.max(0, totalHouseholdCons - pvEnergyConsumed);
+
+        // --- RÉPARTITION ÉNERGÉTIQUE ENTRE VE ET MAISON ---
+        // Le profil VE détermine la part de recharge couverte par le solaire direct :
+        // Pendulaire classique = 20%, Mix = 40%, Full domicile = 60%
+        const veSolarTarget = veConsVal * veProfileVal;
+        const veSolarKwh = Math.min(veSolarTarget, pvEnergyConsumed);
+        const veGridImport = veConsVal - veSolarKwh;
+
+        // Le solde d'énergie PV consommée est alloué aux besoins de la maison
+        const houseSolarKwh = Math.min(houseConsVal, pvEnergyConsumed - veSolarKwh);
+        const houseGridImport = Math.max(0, houseConsVal - houseSolarKwh);
+
+        // --- CALCUL DES COÛTS : SOLAR BOOST ---
+        // Coût Maison
         let sbHouseCost = 0;
         if (isHPHC) {
-            // En HP/HC, on considère la répartition standard : 60% HP / 40% HC pour l'import réseau
-            sbHouseCost = sbHouseImport * (0.60 * sbRateHP + 0.40 * sbRateHC);
+            // Répartition standard de la maison : 60% HP / 40% HC
+            sbHouseCost = houseGridImport * (0.60 * sbRateHP + 0.40 * sbRateHC);
         } else {
-            sbHouseCost = sbHouseImport * sbRateBase;
+            sbHouseCost = houseGridImport * sbRateBase;
         }
 
-        // Coût recharge VE sous Solar Boost
+        // Coût Recharge VE
         let sbVeCost = 0;
-        if (veSunHoursVal) {
-            // Branché le jour : 70% couvert par le solaire direct/batterie (gratuit), 30% tiré sur le réseau.
-            // Le jour correspond aux Heures Pleines (HP) en option HP/HC.
-            const rateVeh = isHPHC ? sbRateHP : sbRateBase;
-            sbVeCost = veConsVal * 0.30 * rateVeh;
+        if (isHPHC) {
+            // En HP/HC, la recharge réseau du VE s'effectue principalement en heures creuses (la nuit)
+            let hcShare = 1.0;
+            if (veProfileVal > 0.45) hcShare = 0.80; // Full domicile : 80% HC, 20% HP
+            else if (veProfileVal > 0.25) hcShare = 0.90; // Mix : 90% HC, 10% HP
+            sbVeCost = veGridImport * (hcShare * sbRateHC + (1 - hcShare) * sbRateHP);
         } else {
-            // Branché la nuit : 100% tiré sur le réseau au tarif standard.
-            // La nuit correspond aux Heures Creuses (HC) en option HP/HC.
-            const rateVeh = isHPHC ? sbRateHC : sbRateBase;
-            sbVeCost = veConsVal * rateVeh;
+            sbVeCost = veGridImport * sbRateBase;
         }
 
-        // Rachat du surplus (30% de la production solaire) au tarif Solar Boost (4 cts)
-        const sbSurplus = annualProduction * 0.30;
-        const sbBuybackRevenue = sbSurplus * sbBuybackRate;
+        // Rachat du surplus Solar Boost (4 cts/kWh)
+        const sbBuybackRevenue = pvSurplus * sbBuybackRate;
 
-        // Bonus de pilotage quotidien de la batterie (0.10€ par jour par kWh de batterie)
+        // Bonus pilotage batterie quotidien (0,10 €/jour par kWh)
         const sbPilotageBonus = batterykWhVal * 0.10 * 365;
 
-        // Bonus Bienvenue 1ère année offerte (grille officielle basée sur la batterie)
+        // Bonus Bienvenue 1ère année offerte (OESF)
         let welcomeBonusAmount = 0;
         if (welcomeBonusChecked && batterykWhVal > 0) {
-            if (batterykWhVal < 6) {
-                welcomeBonusAmount = 200;
-            } else if (batterykWhVal < 9) {
-                welcomeBonusAmount = 250;
-            } else {
-                welcomeBonusAmount = 350;
-            }
+            if (batterykWhVal < 6) welcomeBonusAmount = 200;
+            else if (batterykWhVal < 9) welcomeBonusAmount = 250;
+            else welcomeBonusAmount = 350;
         }
 
-        // Coûts Nets SB année par année
+        // Coûts Nets Solar Boost sur 3 ans
         const sbNetY1 = sbAnnualSub + sbHouseCost + sbVeCost - sbBuybackRevenue - sbPilotageBonus - welcomeBonusAmount;
         const sbNetY2 = sbAnnualSub + sbHouseCost + sbVeCost - sbBuybackRevenue - sbPilotageBonus;
         const sbNetY3 = sbNetY2;
         const sbTotal3Years = sbNetY1 + sbNetY2 + sbNetY3;
         const sbAverageNetAnnual = sbTotal3Years / 3;
 
-        // --- OFFRE INTELLIGENT OCTOPUS (IO) ---
-        // Autoconsommation de la maison :
-        // Si le client a une batterie (sélectionnée sur le slider) : 70% d'autoconsommation (import 30%)
-        // Sinon : 35% d'autoconsommation standard (import 65%)
-        const ioSelfConsRate = (batterykWhVal > 0) ? 0.70 : 0.35;
-        const ioHouseImport = houseConsVal * (1 - ioSelfConsRate);
+        // --- CALCUL DES COÛTS : INTELLIGENT OCTOPUS (IO) ---
+        // Dans IO, si le client a une batterie, l'autoconsommation de la maison est identique à SB (60%).
+        // Si pas de batterie, l'autoconsommation chute à ~35%.
+        const ioAutoConsRatio = (batterykWhVal > 0) ? autoConsRatio : 0.35;
+        const ioPvEnergyConsumed = annualProduction * ioAutoConsRatio;
+        const ioSurplus = annualProduction * (1 - ioAutoConsRatio);
+
+        // Répartition VE et Maison sous IO
+        const ioVeSolarKwh = Math.min(veConsVal * veProfileVal, ioPvEnergyConsumed);
+        const ioVeGridImport = veConsVal - ioVeSolarKwh;
+        const ioHouseSolarKwh = Math.min(houseConsVal, ioPvEnergyConsumed - ioVeSolarKwh);
+        const ioHouseGridImport = Math.max(0, houseConsVal - ioHouseSolarKwh);
+
+        // Coût Maison IO
         let ioHouseCost = 0;
         if (isHPHC) {
-            // En HP/HC, on applique la même répartition standard 60% HP / 40% HC pour la maison
-            ioHouseCost = ioHouseImport * (0.60 * ioRateHP + 0.40 * ioRateHC);
+            ioHouseCost = ioHouseGridImport * (0.60 * ioRateHP + 0.40 * ioRateHC);
         } else {
-            ioHouseCost = ioHouseImport * ioRateBase;
+            ioHouseCost = ioHouseGridImport * ioRateBase;
         }
 
-        // Recharge VE avec IO : coût net garanti à 8 cts grâce à la recharge pilotée
-        const ioVeCost = veConsVal * tariffIO;
+        // Coût Recharge VE IO : 0,08 €/kWh net garanti sur tout l'import réseau
+        const ioVeCost = ioVeGridImport * tariffIO;
 
-        // Rachat surplus avec IO au tarif standard (EDF OA) choisi
-        const ioSurplus = annualProduction * (1 - ioSelfConsRate);
+        // Rachat du surplus IO au tarif EDF OA sélectionné
         const ioBuybackRevenue = ioSurplus * standardBuybackVal;
 
-        // Coûts Nets IO année par année (identique d'une année à l'autre)
+        // Coûts Nets IO sur 3 ans (identique chaque année)
         const ioNetY1 = ioAnnualSub + ioHouseCost + ioVeCost - ioBuybackRevenue;
         const ioNetY2 = ioNetY1;
         const ioNetY3 = ioNetY1;
@@ -246,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sbBillVe.textContent = Math.round(sbVeCost).toLocaleString('fr-FR') + ' €/an';
         sbGainPilot.textContent = '-' + Math.round(sbPilotageBonus).toLocaleString('fr-FR') + ' €/an';
         sbGainBuyback.textContent = '-' + Math.round(sbBuybackRevenue).toLocaleString('fr-FR') + ' €/an';
-        
+
         if (welcomeBonusAmount > 0) {
             sbWelcomeLi.style.display = 'flex';
             sbWelcomeDisplay.textContent = '-' + Math.round(welcomeBonusAmount / 3).toLocaleString('fr-FR') + ' €/an';
@@ -262,33 +309,31 @@ document.addEventListener('DOMContentLoaded', () => {
         ioBillVe.textContent = Math.round(ioVeCost).toLocaleString('fr-FR') + ' €/an';
         ioGainBuyback.textContent = '-' + Math.round(ioBuybackRevenue).toLocaleString('fr-FR') + ' €/an';
 
+        // Libellé de rachat EDF OA dynamique
         let rateLabel = (standardBuybackVal * 100).toFixed(1) + ' cts';
-        if (standardBuybackVal === 0.011) rateLabel = '1.1 cts (nouveau)';
-        else if (standardBuybackVal === 0.04) rateLabel = '4.0 cts (ancien)';
-        else if (standardBuybackVal === 0.13) rateLabel = '13.0 cts (ancien)';
+        if (standardBuybackVal === 0.011) rateLabel = '1.1 cts (EDF OA actuel)';
+        else if (standardBuybackVal === 0.04) rateLabel = '4.0 cts (EDF OA 2025)';
+        else if (standardBuybackVal === 0.13) rateLabel = '13.0 cts (EDF OA < fév. 2025)';
         ioBuybackTitle.textContent = 'Rachat Surplus (' + rateLabel + ') :';
 
-        // Mise à jour dynamique des libellés de tarifs appliqués
+        // Profil VE texte pour les infobulles
+        let profName = 'Mix 40% solaire';
+        if (veProfileVal <= 0.25) profName = 'Pendulaire 20% solaire';
+        else if (veProfileVal > 0.45) profName = 'Full domicile 60% solaire';
+
+        // Mise à jour dynamique des libellés de cartes
         if (isHPHC) {
-            const sbAvgRate = 0.60 * sbRateHP + 0.40 * sbRateHC;
-            sbLabelHouse.innerHTML = `Maison (30% réseau à 60% HP / 40% HC : <strong>${sbAvgRate.toFixed(4).replace('.', ',')} €/kWh</strong>)`;
-            if (veSunHoursVal) {
-                sbLabelVe.innerHTML = `Recharge VE (30% réseau en HP à <strong>${sbRateHP.toFixed(4).replace('.', ',')} €/kWh</strong>)`;
-            } else {
-                sbLabelVe.innerHTML = `Recharge VE (100% réseau en HC à <strong>${sbRateHC.toFixed(4).replace('.', ',')} €/kWh</strong>)`;
-            }
+            const sbAvgHouseRate = 0.60 * sbRateHP + 0.40 * sbRateHC;
+            sbLabelHouse.innerHTML = `Maison (${Math.round(houseGridImport)} kWh réseau à <strong>${sbAvgHouseRate.toFixed(4).replace('.', ',')} €/kWh</strong>)`;
+            sbLabelVe.innerHTML = `Recharge VE (${Math.round(veGridImport)} kWh réseau en HC : <strong>${sbRateHC.toFixed(4).replace('.', ',')} €/kWh</strong>)`;
 
-            const ioAvgRate = 0.60 * ioRateHP + 0.40 * ioRateHC;
-            ioLabelHouse.innerHTML = `Maison (${Math.round((1 - ioSelfConsRate) * 100)}% réseau à 60% HP / 40% HC : <strong>${ioAvgRate.toFixed(4).replace('.', ',')} €/kWh</strong>)`;
+            const ioAvgHouseRate = 0.60 * ioRateHP + 0.40 * ioRateHC;
+            ioLabelHouse.innerHTML = `Maison (${Math.round(ioHouseGridImport)} kWh réseau à <strong>${ioAvgHouseRate.toFixed(4).replace('.', ',')} €/kWh</strong>)`;
         } else {
-            sbLabelHouse.innerHTML = `Maison (30% réseau à <strong>${sbRateBase.toFixed(4).replace('.', ',')} €/kWh</strong>)`;
-            if (veSunHoursVal) {
-                sbLabelVe.innerHTML = `Recharge VE (30% réseau à <strong>${sbRateBase.toFixed(4).replace('.', ',')} €/kWh</strong>)`;
-            } else {
-                sbLabelVe.innerHTML = `Recharge VE (100% réseau à <strong>${sbRateBase.toFixed(4).replace('.', ',')} €/kWh</strong>)`;
-            }
+            sbLabelHouse.innerHTML = `Maison (${Math.round(houseGridImport)} kWh réseau à <strong>${sbRateBase.toFixed(4).replace('.', ',')} €/kWh</strong>)`;
+            sbLabelVe.innerHTML = `Recharge VE (${Math.round(veGridImport)} kWh réseau à <strong>${sbRateBase.toFixed(4).replace('.', ',')} €/kWh</strong>)`;
 
-            ioLabelHouse.innerHTML = `Maison (${Math.round((1 - ioSelfConsRate) * 100)}% réseau à <strong>${ioRateBase.toFixed(4).replace('.', ',')} €/kWh</strong>)`;
+            ioLabelHouse.innerHTML = `Maison (${Math.round(ioHouseGridImport)} kWh réseau à <strong>${ioRateBase.toFixed(4).replace('.', ',')} €/kWh</strong>)`;
         }
 
         // --- COMPARAISON TABLEAU SUR 3 ANS ---
@@ -339,26 +384,26 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // --- CARTE DE CONCLUSION & RECOMMENDATION DYNAMIQUE ---
-        conclusionContainer.className = 'conclusion-box'; // reset classes
+        // --- CARTE DE CONCLUSION & RECOMMANDATION DYNAMIQUE ---
+        conclusionContainer.className = 'conclusion-box';
         if (sbAverageNetAnnual < ioAverageNetAnnual) {
             const saving = ioAverageNetAnnual - sbAverageNetAnnual;
             conclusionEmoji.textContent = '🟢';
             conclusionTitle.textContent = 'L\'offre Solar Boost est plus économique !';
             conclusionDesc.innerHTML = `Vous économisez en moyenne <strong>${Math.round(saving)} € par an</strong> (soit <strong>${Math.round(saving * 3)} € sur 3 ans</strong>) avec Solar Boost.<br>
-                                       <em>Pourquoi ?</em> Grâce au <strong>Bonus Pilotage quotidien de la batterie</strong> (qui vous rapporte ${Math.round(sbPilotageBonus)} €/an) et au <strong>tarif de rachat surplus fixé à 4 cts/kWh</strong> (contre ${rateLabel} pour EDF OA).`;
+                                       <em>Pourquoi ?</em> Grâce au <strong>Bonus Pilotage quotidien de la batterie</strong> (qui vous rapporte ${Math.round(sbPilotageBonus)} €/an) et au <strong>rachat du surplus à 4 cts/kWh</strong>, combinés à votre profil de recharge VE (${profName}).`;
             conclusionContainer.classList.add('winner-sb');
         } else if (ioAverageNetAnnual < sbAverageNetAnnual) {
             const saving = sbAverageNetAnnual - ioAverageNetAnnual;
             conclusionEmoji.textContent = '⚡';
             conclusionTitle.textContent = 'L\'offre Intelligent Octopus est plus économique !';
             conclusionDesc.innerHTML = `Vous économisez en moyenne <strong>${Math.round(saving)} € par an</strong> (soit <strong>${Math.round(saving * 3)} € sur 3 ans</strong>) avec Intelligent Octopus.<br>
-                                       <em>Pourquoi ?</em> Le <strong>tarif de recharge VE très avantageux de 0,08 €/kWh</strong> surpasse les gains du pilotage batterie, notamment en raison de votre kilométrage important et de l'absence de charge en journée.`;
+                                       <em>Pourquoi ?</em> Le <strong>tarif de recharge VE garanti à 0,08 €/kWh</strong> surpasse les gains du pilotage batterie, notamment avec un kilométrage élevé et une recharge majoritairement sur le réseau.`;
             conclusionContainer.classList.add('winner-io');
         } else {
             conclusionEmoji.textContent = '⚖️';
             conclusionTitle.textContent = 'Les deux offres sont financièrement équivalentes !';
-            conclusionDesc.textContent = 'Ajustez votre profil d\'utilisation (par exemple en cochant le branchement en journée ou en modifiant les km du véhicule) pour voir quelle offre se détache.';
+            conclusionDesc.textContent = 'Ajustez votre profil de recharge VE ou votre capacité de batterie pour identifier quelle offre maximise vos économies.';
             conclusionContainer.classList.add('draw');
         }
     }
@@ -367,13 +412,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputsList = [
         compPwr,
         compOptionTarifaire,
+        compSbGridVersion,
         compIoGridVersion,
         compHouseCons, 
         compSolarPwr, 
         compBatterySize, 
+        compAutoconsRate,
         compVeMileage, 
         compVeEfficiency, 
-        compVeSunHours, 
+        compVeProfile, 
         compSolarWelcome, 
         compStandardBuyback
     ];
@@ -385,7 +432,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Synchroniser le champ de saisie numérique vers le slider pour la puissance solaire
+    // Synchronisation du champ de saisie numérique vers le slider pour la puissance solaire
     compSolarPwrInput.addEventListener('input', () => {
         let val = parseFloat(compSolarPwrInput.value);
         if (!isNaN(val) && val >= 3 && val <= 12) {
@@ -402,7 +449,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateComparison();
     });
 
-    // Synchroniser le champ de saisie numérique vers le slider pour la batterie
+    // Synchronisation du champ de saisie numérique vers le slider pour la batterie
     compBatteryInput.addEventListener('input', () => {
         let val = parseFloat(compBatteryInput.value);
         if (!isNaN(val) && val >= 2 && val <= 15) {
@@ -418,6 +465,25 @@ document.addEventListener('DOMContentLoaded', () => {
         compBatterySize.value = val;
         updateComparison();
     });
+
+    // Synchronisation du champ de saisie numérique vers le slider pour l'autoconsommation
+    if (compAutoconsRateInput && compAutoconsRate) {
+        compAutoconsRateInput.addEventListener('input', () => {
+            let val = parseFloat(compAutoconsRateInput.value);
+            if (!isNaN(val) && val >= 20 && val <= 95) {
+                compAutoconsRate.value = val;
+                updateComparison();
+            }
+        });
+        compAutoconsRateInput.addEventListener('change', () => {
+            let val = parseFloat(compAutoconsRateInput.value);
+            if (isNaN(val) || val < 20) val = 20;
+            if (val > 95) val = 95;
+            compAutoconsRateInput.value = val;
+            compAutoconsRate.value = val;
+            updateComparison();
+        });
+    }
 
     // Lancer la première mise à jour à l'initialisation
     updateComparison();
