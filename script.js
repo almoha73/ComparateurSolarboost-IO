@@ -28,6 +28,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const sbGainBuyback = document.getElementById('sb-gain-buyback');
     const sbWelcomeLi = document.getElementById('sb-welcome-li');
     const sbWelcomeDisplay = document.getElementById('sb-welcome-display');
+    const sbCostLabel = document.getElementById('sb-cost-label');
+    const sbTooltipText = document.getElementById('sb-tooltip-text');
+    const sbNetCostCard = document.getElementById('sb-net-cost-card');
 
     // Outputs Intelligent Octopus
     const ioNetAnnual = document.getElementById('io-net-annual');
@@ -37,6 +40,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const ioBillVe = document.getElementById('io-bill-ve');
     const ioGainBuyback = document.getElementById('io-gain-buyback');
     const ioBuybackTitle = document.getElementById('io-buyback-title');
+    const ioCostLabel = document.getElementById('io-cost-label');
+    const ioTooltipText = document.getElementById('io-tooltip-text');
+    const ioNetCostCard = document.getElementById('io-net-cost-card');
 
     // Labels de tarifs dynamiques
     const sbLabelHouse = document.getElementById('sb-label-house');
@@ -286,8 +292,33 @@ document.addEventListener('DOMContentLoaded', () => {
         const ioAverageNetAnnual = ioTotal3Years / 3;
 
         // --- AFFICHAGE DES RÉSULTATS SOLAR BOOST ---
-        sbNetAnnual.textContent = Math.round(sbAverageNetAnnual).toLocaleString('fr-FR') + ' €';
-        sbNetMonthly.textContent = 'soit ' + (sbAverageNetAnnual / 12).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' € / mois';
+        const totalSbGains = sbBuybackRevenue + sbPilotageBonus + (welcomeBonusAmount / 3);
+
+        if (sbAverageNetAnnual < 0) {
+            const netCreditAnnual = Math.abs(Math.round(sbAverageNetAnnual));
+            const netCreditMonthly = Math.abs(sbAverageNetAnnual / 12).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            
+            if (sbCostLabel) sbCostLabel.textContent = "🟢 Solde Créditeur Net (3 ans)";
+            sbNetAnnual.textContent = "+ " + netCreditAnnual.toLocaleString('fr-FR') + " € / an";
+            sbNetAnnual.style.color = "var(--success)";
+            sbNetMonthly.textContent = "soit + " + netCreditMonthly + " € / mois reversés par Octopus";
+            if (sbNetCostCard) sbNetCostCard.classList.add('is-credit');
+
+            if (sbTooltipText) {
+                sbTooltipText.innerHTML = `👉 <strong>Quand le foyer a une bonne production solaire (${solarkWcVal} kWc) et une batterie de ${batterykWhVal} kWh</strong>, les gains (<strong>-${Math.round(totalSbGains)} €/an</strong> de bonus) sont supérieurs à sa facture d'électricité !<br><br>Le foyer devient donc <strong>créditeur net de ${netCreditAnnual} € par an</strong> (Octopus vous reverse de l'argent).`;
+            }
+        } else {
+            if (sbCostLabel) sbCostLabel.textContent = "Coût Net Moyen (3 ans)";
+            sbNetAnnual.textContent = Math.round(sbAverageNetAnnual).toLocaleString('fr-FR') + ' €';
+            sbNetAnnual.style.color = "#fff";
+            sbNetMonthly.textContent = 'soit ' + (sbAverageNetAnnual / 12).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' € / mois';
+            if (sbNetCostCard) sbNetCostCard.classList.remove('is-credit');
+
+            if (sbTooltipText) {
+                sbTooltipText.innerHTML = `Le <strong>coût net moyen</strong> prend en compte vos dépenses d'électricité (abonnement + import réseau) diminuées de vos gains (<strong>-${Math.round(totalSbGains)} €/an</strong> de bonus batterie, rachat surplus et cadeau 1ère année).`;
+            }
+        }
+
         sbBillSub.textContent = Math.round(sbAnnualSub).toLocaleString('fr-FR') + ' €/an';
         sbBillHouse.textContent = Math.round(sbHouseCost).toLocaleString('fr-FR') + ' €/an';
         sbBillVe.textContent = Math.round(sbVeCost).toLocaleString('fr-FR') + ' €/an';
@@ -308,6 +339,10 @@ document.addEventListener('DOMContentLoaded', () => {
         ioBillHouse.textContent = Math.round(ioHouseCost).toLocaleString('fr-FR') + ' €/an';
         ioBillVe.textContent = Math.round(ioVeCost).toLocaleString('fr-FR') + ' €/an';
         ioGainBuyback.textContent = '-' + Math.round(ioBuybackRevenue).toLocaleString('fr-FR') + ' €/an';
+
+        if (ioTooltipText) {
+            ioTooltipText.innerHTML = `Le <strong>coût net Intelligent Octopus</strong> prend en compte votre abonnement, la maison et la recharge de votre VE garantie à <strong>0,08 €/kWh</strong>, déduction faite de la revente du surplus solaire au tarif EDF OA choisi.`;
+        }
 
         // Libellé de rachat EDF OA dynamique
         let rateLabel = (standardBuybackVal * 100).toFixed(1) + ' cts';
