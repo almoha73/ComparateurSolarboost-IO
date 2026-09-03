@@ -305,7 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (sbNetCostCard) sbNetCostCard.classList.add('is-credit');
 
             if (sbTooltipText) {
-                sbTooltipText.innerHTML = `👉 <strong>Quand le foyer a une bonne production solaire (${solarkWcVal} kWc) et une batterie de ${batterykWhVal} kWh</strong>, les gains (<strong>-${Math.round(totalSbGains)} €/an</strong> de bonus) sont supérieurs à sa facture d'électricité !<br><br>Le foyer devient donc <strong>créditeur net de ${netCreditAnnual} € par an</strong> (Octopus vous reverse de l'argent).`;
+                sbTooltipText.innerHTML = `👉 <strong>Quand le foyer a une bonne production solaire (${solarkWcVal} kWc) et une batterie de ${batterykWhVal} kWh</strong>, les gains (<strong>${Math.round(totalSbGains)} €/an</strong> de bonus) sont supérieurs à sa facture d'électricité !<br><br>Le foyer devient donc <strong>créditeur net de ${netCreditAnnual} € par an</strong> (Octopus vous reverse de l'argent).`;
             }
         } else {
             if (sbCostLabel) sbCostLabel.textContent = "Coût Net Moyen (3 ans)";
@@ -315,7 +315,21 @@ document.addEventListener('DOMContentLoaded', () => {
             if (sbNetCostCard) sbNetCostCard.classList.remove('is-credit');
 
             if (sbTooltipText) {
-                sbTooltipText.innerHTML = `Le <strong>coût net moyen</strong> prend en compte vos dépenses d'électricité (abonnement + import réseau) diminuées de vos gains (<strong>-${Math.round(totalSbGains)} €/an</strong> de bonus batterie, rachat surplus et cadeau 1ère année).`;
+                const gainItems = [];
+                if (sbPilotageBonus > 0) gainItems.push("bonus batterie");
+                if (sbBuybackRevenue > 0) gainItems.push("rachat surplus");
+                if (welcomeBonusAmount > 0) gainItems.push("cadeau 1ère année");
+                
+                let gainItemsText = "bonus";
+                if (gainItems.length === 1) {
+                    gainItemsText = gainItems[0];
+                } else if (gainItems.length === 2) {
+                    gainItemsText = `${gainItems[0]} et ${gainItems[1]}`;
+                } else if (gainItems.length > 2) {
+                    gainItemsText = `${gainItems.slice(0, -1).join(', ')} et ${gainItems[gainItems.length - 1]}`;
+                }
+
+                sbTooltipText.innerHTML = `Le <strong>coût net moyen</strong> prend en compte vos dépenses d'électricité (abonnement + import réseau) diminuées de vos gains (<strong>${Math.round(totalSbGains)} €/an</strong> de ${gainItemsText}).`;
             }
         }
 

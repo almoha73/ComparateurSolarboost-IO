@@ -360,14 +360,17 @@ body {
     border-radius: 16px;
     padding: 2rem;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     backdrop-filter: blur(16px);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     transition: transform 0.3s ease, border-color 0.3s ease;
+    z-index: 1;
 }
 
-.card:hover {
+.card:hover,
+.card:focus-within {
     transform: translateY(-5px);
+    z-index: 30;
 }
 
 .card-sb:hover { border-color: var(--primary); }
@@ -467,8 +470,8 @@ body {
     bottom: calc(100% + 12px);
     left: 50%;
     transform: translateX(-50%) translateY(8px);
-    background: rgba(18, 9, 42, 0.96);
-    backdrop-filter: blur(14px);
+    background: rgba(15, 8, 35, 0.98);
+    backdrop-filter: blur(16px);
     color: #f8fafc;
     text-align: left;
     padding: 0.9rem 1.1rem;
@@ -506,6 +509,9 @@ body {
     border-color: var(--success) transparent transparent transparent;
 }
 
+.cost-label-container:hover .custom-tooltip,
+.cost-label-container:focus-within .custom-tooltip,
+.info-tooltip-trigger:hover ~ .custom-tooltip,
 .info-tooltip-trigger:hover .custom-tooltip,
 .net-cost-wrapper:hover .custom-tooltip {
     visibility: visible;
